@@ -42,19 +42,36 @@ def run_trades():
   df = SA.make_data(percent_changes, headlines)
   [RFR_model, vectorizer, mse] = SA.make_model(df)
 
+  empty = st.empty()
   while (True):
-    current_orders = AT.get_active_orders(st.session_state['ticker'], client)
-    current_positions = AT.get_current_positions(st.session_state['ticker'], client)
+    with empty.container():
+      current_orders = AT.get_active_orders(st.session_state['ticker'], client)
+      current_positions = AT.get_positions(client)
 
-    if (len(current_orders) == 0):
+      st.write("Acquiring headlines...")
       recent_headline = SA.get_most_recent_headline(st.session_state['ticker'], st.session_state['finnhub_key'])
-      if (len(current_positions) == 0):
-        if SA.predict_headline(RFR_model, vectorizer, recent_headline) > 0:
-          AT.submit_order_buy(st.session_state['ticker'], 1, client)
-          time.sleep(60)
+      st.write("Recent headline acquired: " + recent_headline)
+      pc = SA.predict_headline(RFR_model, vectorizer, recent_headline)
+      if pc > 0:
+        sentiment = " (positive sentiment)"
       else:
-        if (SA.predict_headline(RFR_model, vectorizer, recent_headline) < 0):
+        sentiment = " (negative sentiment)"
+      st.write("Estimated percent change: " + str(pc) + sentiment)
+
+      if (len(current_orders) == 0):
+        if (len(current_positions) == 0):
+          if pc > 0:
+            st.write("No current position open, submitting buy order")
+            AT.submit_order_buy(st.session_state['ticker'], 1, client)
+            st.lael("Buy order submitted")
+            time.sleep(60)
+          else:
+            st.write("Negative sentiment detected, waiting for next headline")  
+            time.sleep(60)        
+        time.sleep(60)
+      else:
+        if (pc < 0):
+          st.write("Negative sentiment detected and active position open, submitting sell order to close position")
           AT.submit_order_sell(st.session_state['ticker'], 1, client)
-          time.sleep(60)
-    else:
-      time.sleep(60)
+          st.write("Sell order submitted")
+        time.sleep(60)
