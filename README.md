@@ -9,5 +9,5 @@ In terminal, run the following commands:
 
 **2).** streamlit run ./App.py
 
-Note that this program requires API keys from [finnhub](https://finnhub.io/) and [Alpaca](https://alpaca.markets/). These keys are free and are reccomended to be stored locally in .env file. 
+Note that this program requires API keys from [finnhub](https://finnhub.io/) and [Alpaca](https://alpaca.markets/). These keys are free and are reccomended to be stored locally in .env file or in the config.json. 
 
